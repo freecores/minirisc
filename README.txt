@@ -65,6 +65,7 @@ Performance
 
 - Single cycle instruction execution, except as noted above.
 - Here are results of some sample implementations:
+  - Xilinx Spartan 2e ((Device: xc2s50e-6): Fmax: 80Mhz, Utilization: 30%
   - Xilinx Spartan2 (Device: xc2s30-6-cs144): Fmax: 50Mhz, Utilization: 66%, Ports: Tsu: 2.2nS, Tcq: 7.7nS
   - Xilinx Virtex   (Device: xcv50-4-cs144) : Fmax: 40Mhz, Utilization: 35%, Ports: Tsu: 3.0nS, Tcq: 6.2nS
   - Xilinx VirtexE  (Device: xcv50e-8-cs144): Fmax: 66Mhz, Utilization: 35%, Ports: Tsu: 1.7nS, Tcq: 4.5nS

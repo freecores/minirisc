@@ -3,34 +3,70 @@
 ////  Mini-RISC-1                                                ////
 ////  Register File                                              ////
 ////                                                             ////
+////                                                             ////
 ////  Author: Rudolf Usselmann                                   ////
-////          russelmann@hotmail.com                             ////
+////          rudi@asics.ws                                      ////
+////                                                             ////
+////                                                             ////
+////  D/L from: http://www.opencores.org/cores/minirisc/         ////
 ////                                                             ////
 /////////////////////////////////////////////////////////////////////
 ////                                                             ////
-//// Copyright (C) 2000 Rudolf Usselmann                         ////
-////                    russelmann@hotmail.com                   ////
+//// Copyright (C) 2000-2002 Rudolf Usselmann                    ////
+////                         www.asics.ws                        ////
+////                         rudi@asics.ws                       ////
 ////                                                             ////
 //// This source file may be used and distributed without        ////
 //// restriction provided that this copyright statement is not   ////
 //// removed from the file and that any derivative work contains ////
 //// the original copyright notice and the associated disclaimer.////
 ////                                                             ////
-//// THIS SOURCE FILE IS PROVIDED "AS IS" AND WITHOUT ANY        ////
-//// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT           ////
-//// LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND   ////
-//// FITNESS FOR A PARTICULAR PURPOSE.                           ////
+////     THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY     ////
+//// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED   ////
+//// TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS   ////
+//// FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL THE AUTHOR      ////
+//// OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,         ////
+//// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES    ////
+//// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE   ////
+//// GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR        ////
+//// BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF  ////
+//// LIABILITY, WHETHER IN  CONTRACT, STRICT LIABILITY, OR TORT  ////
+//// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT  ////
+//// OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         ////
+//// POSSIBILITY OF SUCH DAMAGE.                                 ////
 ////                                                             ////
 /////////////////////////////////////////////////////////////////////
 
+//  CVS Log
+//
+//  $Id: register_file.v,v 1.2 2002-09-27 15:35:40 rudi Exp $
+//
+//  $Date: 2002-09-27 15:35:40 $
+//  $Revision: 1.2 $
+//  $Author: rudi $
+//  $Locker:  $
+//  $State: Exp $
+//
+// Change History:
+//               $Log: not supported by cvs2svn $
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 `timescale 1ns / 10ps
 
-module register_file(	clk,
+module register_file(	clk, rst,
 			rf_rd_bnk, rf_rd_addr, rf_rd_data,
 			rf_we, rf_wr_bnk, rf_wr_addr, rf_wr_data);
 
-input		clk;
+input		clk,rst;
 input  [1:0]	rf_rd_bnk;
 input  [4:0]	rf_rd_addr;
 output [7:0]	rf_rd_data;
@@ -64,27 +100,27 @@ assign	wr_addr = 	rf_wr_addr[4] ?
 always @(posedge clk)
 	rd_wr_addr_equal <= #1 rd_wr_addr_equal_tmp;
 
-//assign rd_wr_addr_equal_tmp = (rd_addr==wr_addr) & rf_we;
+assign rd_wr_addr_equal_tmp = (rd_addr==wr_addr) & rf_we;
 
-cmp8_eq u0( .eq(rd_wr_addr_equal_tmp), .a({rf_we, rd_addr}), .b({1'b1, wr_addr}) );
-
-//always @(posedge clk)
-//	rd_adr_r <= #1 {rf_rd_bnk, rf_rd_addr};
-
-//always @(posedge clk)
-//	wr_adr_r <= #1 {rf_wr_bnk, rf_wr_addr};
-
-//cmp8_eq u0( .eq(rd_wr_addr_equal), .a({rf_we, rd_adr_r}), .b({1'b1, wr_adr_r}) );
-
-//assign rf_rd_data = rd_wr_addr_equal ? wr_data_tmp : rf_rd_data_mem;
-
-mux2_8 u2( .sel(rd_wr_addr_equal), .in1(wr_data_tmp), .in0(rf_rd_data_mem), .out(rf_rd_data) );
+assign rf_rd_data = rd_wr_addr_equal ? wr_data_tmp : rf_rd_data_mem;
 
 always @(posedge clk)
 	wr_data_tmp <= #1 rf_wr_data;
 
 // This is the actual Memory
-ssram_128x8	u1(clk, rd_addr, rf_rd_data_mem, rf_we, wr_addr, rf_wr_data);
-
+generic_dpram #(7,8) rf0(
+        	.rclk(		clk		),
+		.rrst(		rst		),
+		.rce(		1'b1		),
+		.oe(		1'b1		),
+		.raddr(		rd_addr		),
+		.do(		rf_rd_data_mem	),
+        	.wclk(		clk		),
+		.wrst(		rst		),
+		.wce(		1'b1		),
+		.we(		rf_we		),
+		.waddr(		wr_addr		),
+		.di(		rf_wr_data	)
+		);
 
 endmodule
