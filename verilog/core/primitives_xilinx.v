@@ -39,16 +39,19 @@
 
 //  CVS Log
 //
-//  $Id: primitives_xilinx.v,v 1.2 2002-09-27 15:35:40 rudi Exp $
+//  $Id: primitives_xilinx.v,v 1.3 2002-10-01 12:44:24 rudi Exp $
 //
-//  $Date: 2002-09-27 15:35:40 $
-//  $Revision: 1.2 $
+//  $Date: 2002-10-01 12:44:24 $
+//  $Revision: 1.3 $
 //  $Author: rudi $
 //  $Locker:  $
 //  $State: Exp $
 //
 // Change History:
 //               $Log: not supported by cvs2svn $
+//               Revision 1.2  2002/09/27 15:35:40  rudi
+//               Minor update to newer devices ...
+//
 //
 //
 //
@@ -64,14 +67,12 @@
 
 // LIB_TAG
 // synopsys translate_off
-// synthesis translate_off
 `include "XilinxCoreLib/C_ADDSUB_V1_0.v"
 `include "XilinxCoreLib/C_MUX_BUS_V1_0.v"
 `include "XilinxCoreLib/C_COMPARE_V1_0.v"
 `include "XilinxCoreLib/C_MUX_BIT_V1_0.v"
 `include "XilinxCoreLib/C_MEM_DP_BLOCK_V1_0.v"
 `include "XilinxCoreLib/C_REG_FD_V1_0.v"
-// synthesis translate_on
 // synopsys translate_on
 // LIB_TAG_END
 

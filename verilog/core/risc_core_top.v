@@ -39,16 +39,18 @@
 
 //  CVS Log
 //
-//  $Id: risc_core_top.v,v 1.2 2002-09-27 15:35:40 rudi Exp $
+//  $Id: risc_core_top.v,v 1.3 2002-10-01 12:44:24 rudi Exp $
 //
-//  $Date: 2002-09-27 15:35:40 $
-//  $Revision: 1.2 $
+//  $Date: 2002-10-01 12:44:24 $
+//  $Revision: 1.3 $
 //  $Author: rudi $
 //  $Locker:  $
 //  $State: Exp $
 //
 // Change History:
 //               $Log: not supported by cvs2svn $
+//               Revision 1.2  2002/09/27 15:35:40  rudi
+//               Minor update to newer devices ...
 //
 //
 //
@@ -59,7 +61,7 @@
 //
 //
 //
-
+//
 
 `timescale 1ns / 10ps
 
@@ -67,7 +69,7 @@ module mrisc_top(
    clk, rst_in,
    porta, portb, portc,
    tcki,
-   wdt_en );
+   wdt_en );	// synthesis syn_useioff=1 syn_hier="flatten,remove"
 
 // Basic Core I/O.
 input		clk;
@@ -100,14 +102,6 @@ wire [7:0]	portcout;
 wire [7:0]	trisa;
 wire [7:0]	trisb;
 wire [7:0]	trisc;
-
-wire		block0, block1, wr_block0, wr_block1;
-
-wire [10:0]	wr_adr;		// This signals can be used to optionally
-wire [11:0]	wr_data;	// fill the internal ram from external memory
-wire		we;
-
-wire [11:0]	dout_unused;
 
 ////////////////////////////////////////////////////////////////////////
 //
@@ -178,17 +172,6 @@ mrisc u0(
 // Program memory
 //
 
-// Optional interface to fill the memory from external ROM
-assign	wr_adr = 11'h0;
-assign	wr_data = 12'h0;
-assign	we = 1'b0;
-
-// Block selects
-assign	block0 = ~inst_addr[10];
-assign	block1 = inst_addr[10];
-assign  wr_block0 = ~wr_adr[10];
-assign  wr_block1 = wr_adr[10];
-
 generic_spram #(11,12) imem(
 	.clk(	clk		),
 	.rst(	rst_in		),
@@ -196,8 +179,8 @@ generic_spram #(11,12) imem(
 	.we(	1'b0		),
 	.oe(	1'b1		),
 	.addr(	inst_addr	),
-	.di(			),
+	.di(	12'h0		),
 	.do(	inst_data	)
-);
+	);
 
 endmodule

@@ -39,16 +39,19 @@
 
 //  CVS Log
 //
-//  $Id: risc_core.v,v 1.2 2002-09-27 15:35:40 rudi Exp $
+//  $Id: risc_core.v,v 1.3 2002-10-01 12:44:24 rudi Exp $
 //
-//  $Date: 2002-09-27 15:35:40 $
-//  $Revision: 1.2 $
+//  $Date: 2002-10-01 12:44:24 $
+//  $Revision: 1.3 $
 //  $Author: rudi $
 //  $Locker:  $
 //  $State: Exp $
 //
 // Change History:
 //               $Log: not supported by cvs2svn $
+//               Revision 1.2  2002/09/27 15:35:40  rudi
+//               Minor update to newer devices ...
+//
 //
 //
 //
@@ -303,8 +306,16 @@ always @(posedge clk)
 
 ////////////////////////////////////////////////////////////////////////
 // Synchrounous Register File
-register_file u0(	.clk(clk), .rst(rst), .rf_rd_bnk(rf_rd_bnk), .rf_rd_addr(rf_rd_addr), .rf_rd_data(rf_rd_data),
-			.rf_we(rf_we), .rf_wr_bnk(rf_wr_bnk), .rf_wr_addr(rf_wr_addr), .rf_wr_data(rf_wr_data) );
+register_file u0(	.clk(		clk		),
+			.rst(		rst		),
+			.rf_rd_bnk(	rf_rd_bnk	),
+			.rf_rd_addr(	rf_rd_addr	),
+			.rf_rd_data(	rf_rd_data	),
+			.rf_we(		rf_we		),
+			.rf_wr_bnk(	rf_wr_bnk	),
+			.rf_wr_addr(	rf_wr_addr	),
+			.rf_wr_data(	rf_wr_data	)
+		);
 
 ////////////////////////////////////////////////////////////////////////
 // Always Fetch Next Instruction
@@ -324,9 +335,11 @@ assign valid = ~rst_r2 & ~invalidate_1;
 always @(posedge clk)
 	valid_1 <= #1 valid;
 
+always @(posedge clk)
+   	instr_1 <= #1 instr_0;
+
 always @(posedge clk) // Basic Decode extracted directly from the instruction
    begin
-   	instr_1 <= #1 instr_0;
 	// Mask for bit modification instructions
 	case(instr_0[7:5])	// synopsys full_case parallel_case 
 	   0: mask <= #1 8'h01;
@@ -343,7 +356,6 @@ always @(posedge clk) // Basic Decode extracted directly from the instruction
 always @(posedge clk)
 	pc_r <= #1 pc;	// Previous version of PC to accomodate for pipeline
 
-/*
 always @(posedge clk)		// SFR Read Operands
    if(src1_sel_[1])	sfr_rd_data <= #1 instr_0[7:0];
    else
@@ -356,8 +368,9 @@ always @(posedge clk)		// SFR Read Operands
       6: sfr_rd_data <= #1 portb_r;
       7: sfr_rd_data <= #1 portc_r;
    endcase
-*/
 
+
+/*
 always @(posedge clk)
 	sfr_rd_data <= #1 sfr_rd_data_tmp1;
 
@@ -389,16 +402,20 @@ mux4_8 u2(	.sel(sfr_sel[3:2]), .out(sfr_rd_data_tmp2),
 
 mux2_8 u2b(	.sel(instr_0[0]), .out(sfr_rd_data_tmp3),
 		.in0(portb_r), .in1(portc_r)	);
+*/
 
+reg	instd_zero;
+
+always @(posedge clk)
+	instd_zero <= #1 !(|inst_data[4:0]);
 
 // Register File Read Port
 assign rf_rd_bnk  = fsr_next[6:5];
-assign rf_rd_addr = (instr_0[4:0]==0) ? fsr_next[4:0] : instr_0[4:0];
-
+assign rf_rd_addr = instd_zero ? fsr_next[4:0] : instr_0[4:0];
 
 // ALU OP
 always @(posedge clk)
-   casex(instr_0)	// synopsys full_case
+   casex(instr_0)	// synopsys full_case parallel_case
 					// Byte Oriented RF Operations
       I_ADDWF:	alu_op <= #1 ALU_ADD;	// ADDWF
       I_ANDWF:	alu_op <= #1 ALU_AND;	// ANDWF
@@ -429,7 +446,6 @@ always @(posedge clk)
    endcase
 
 
-
 // Source Select
 // This CPU source 1 can be one of: rf (or sfr) or k,
 // second source (if any) is always w
@@ -442,7 +458,7 @@ always @(instr_0)
       I_MOVLW:	src1_sel_ = K_SEL;
       I_RETLW:	src1_sel_ = K_SEL;
       I_XORLW:	src1_sel_ = K_SEL;
-      default:	src1_sel_ = (instr_0[4:3]==2'h0 & instr_0[2:0] != 0) ? SFR_SEL : RF_SEL;
+      default:	src1_sel_ = ( (instr_0[4:3]==2'h0) & (instr_0[2:0] != 3'h0 )) ? SFR_SEL : RF_SEL;
    endcase
 
 always @(posedge clk)
@@ -502,42 +518,24 @@ assign  pc_we_   = sfr_we_ & (instr_0[2:0] == PCL_ADDR);
 
 // Stage 2 destination encoder
 // write enable outputs are registered now
-always @(posedge clk)
-	w_we		<= #1 w_we_;	// working register write 0 enable
+always @(posedge clk)	w_we	<= #1 w_we_;	// working register write 0 enable
 
-always @(posedge clk)
-	w_we1		<= #1 w_we1_;	// working register write 1 enable
+always @(posedge clk)	w_we1	<= #1 w_we1_;	// working register write 1 enable
 
 
 // Register File Write Enable is composed of thee conditions: 1) direct register writing (0x10-0x1f);
 // 2) Direct Global Register writing (0x08-0x0f), and 3) Indirect Register File Writing
 // The logic has been partitioned and balanced between the decode and execute stage ...
-/*
-assign	rf_we = (valid_1 & rf_we1) | (valid_1 & rf_we2 & rf_we3);// register file write enable Composite
+assign	rf_we = rf_we1 |  (rf_we2 & rf_we3);			// register file write enable Composite
 
 always @(posedge clk)
-	rf_we1		<= #1 rf_we_;				// register file write enable 1
+	rf_we1		<= #1 valid & rf_we_;			// register file write enable 1
 
 always @(posedge clk)
-	rf_we2		<= #1 fsr_next[4] | fsr_next[3];	// register file write enable 2 
-
-always @(posedge clk)
-	rf_we3		<= #1 indf_we_;				// register file write enable 3
-*/
-
-assign	rf_we = rf_we1 |  (rf_we2 & rf_we3);// register file write enable Composite
-
-always @(posedge clk)
-	rf_we1		<= #1 valid & rf_we_;				// register file write enable 1
-
-always @(posedge clk)
-	rf_we2		<= #1 valid & (fsr_next[4] | fsr_next[3]);	// register file write enable 2 
+	rf_we2		<= #1 valid & (fsr_next[4] | fsr_next[3]);// register file write enable 2 
 
 always @(posedge clk)
 	rf_we3		<= #1 indf_we_;				// register file write enable 3
-
-
-
 
 always @(posedge clk)
 	wdt_clr		<= #1 instr_0[11:0] == I_CLRWDT;
@@ -592,7 +590,6 @@ always @(instr_0)
 	endcase
    end
 
-
 always @(posedge clk)
    begin
 	pc_skz   <= #1 valid & pc_skz_;
@@ -646,8 +643,16 @@ always @(posedge clk)
 //assign src1 = src1_sel ? rf_rd_data : sfr_rd_data;
 mux2_8 u3(	.sel(src1_sel), .in0(sfr_rd_data), .in1(rf_rd_data), .out(src1) );
 
-alu u4( .s1(src1), .s2(w), .mask(mask), .out(dout),
-	.op(alu_op), .c_in(status[0]), .c(c_out), .dc(dc_out), .z(z_out) );
+alu u4(	.s1(		src1		),
+	.s2(		w		),
+	.mask(		mask		),
+	.out(		dout		),
+	.op(		alu_op		),
+	.c_in(		status[0]	),
+	.c(		c_out		),
+	.dc(		dc_out		),
+	.z(		z_out		)
+	);
 
 // Register file connections
 assign	rf_wr_bnk  = fsr[6:5];
@@ -679,7 +684,6 @@ assign status_next2[2] = stat_bwe[2] ?  z_out : status[2];
 
 mux2_8 u21( .sel(stat_we), .in1( {dout | 8'h18} ), .in0( {status[7:3],status_next2[2:0]} ), .out(status_next) );
 
-//synopsys sync_set_reset "rst"
 always @(posedge clk)
 	if(rst)	status <= #1 STAT_RST_VALUE;
 	else	status <= #1 status_next;
@@ -688,7 +692,6 @@ always @(posedge clk)
 
 mux2_7 u31( .sel(fsr_we), .in1(dout[6:0]), .in0(fsr), .out(fsr_next) );
 
-//synopsys sync_set_reset "rst"
 always @(posedge clk)
 	if(rst)		fsr <= #1 FSR_RST_VALUE;
 	else		fsr <= #1 fsr_next;
@@ -696,25 +699,21 @@ always @(posedge clk)
 always @(posedge clk)
    	if(valid_1 & (w_we | (w_we1 & ~instr_1[5])) )	w <= #1 dout;
 
-//synopsys sync_set_reset "rst"
 always @(posedge clk)
 	if(rst)			trisa <= #1 TRIS_RST_VALUE;
 	else
 	if(trisa_we & valid_1)	trisa <= #1 w;
 
-//synopsys sync_set_reset "rst"
 always @(posedge clk)
 	if(rst)			trisb <= #1 TRIS_RST_VALUE;
 	else
 	if(trisb_we & valid_1)	trisb <= #1 w;
 
-//synopsys sync_set_reset "rst"
 always @(posedge clk)
 	if(rst)			trisc <= #1 TRIS_RST_VALUE;
 	else
 	if(trisc_we & valid_1)	trisc <= #1 w;
 
-//synopsys sync_set_reset "rst"
 always @(posedge clk)
 	if(rst)			option <= #1 OPT_RST_VALUE;
 	else
@@ -743,20 +742,28 @@ always @(posedge clk)
 //assign tmr0_next = tmr0_we ? dout : tmr0_cnt_en ? (tmr0 + 1) : tmr0;
 
 
-mux2_8 u5( .sel(tmr0_we & valid_1), .in0(tmr0_next1), .in1(dout), .out(tmr0_next) );
-mux2_8 u6( .sel(tmr0_cnt_en), .in0(tmr0), .in1(tmr0_plus_1), .out(tmr0_next1) );
-inc8 u7( .in(tmr0), .out(tmr0_plus_1) );
+mux2_8 u5(	.sel(tmr0_we & valid_1),
+		.in0(tmr0_next1), .in1(dout),
+		.out(tmr0_next) );
+mux2_8 u6(	.sel(tmr0_cnt_en),
+		.in0(tmr0), .in1(tmr0_plus_1),
+		.out(tmr0_next1) );
 
+inc8 u7(	.in(tmr0), .out(tmr0_plus_1) );
 
 always @(posedge clk)
 	tmr0 <= #1 tmr0_next;
 
-presclr_wdt u8(	.clk(clk), .rst(rst), .tcki(tcki),
-		.option(option[5:0]),
-		.tmr0_we(tmr0_we & valid_1), 
-		.tmr0_cnt_en(tmr0_cnt_en), .wdt_en(wdt_en),
-		.wdt_clr(wdt_clr & valid_1),
-		.wdt_to(wdt_to));
+presclr_wdt u8(	.clk(		clk			),
+		.rst(		rst			),
+		.tcki(		tcki			),
+		.option(	option[5:0]		),
+		.tmr0_we(	tmr0_we & valid_1	), 
+		.tmr0_cnt_en(	tmr0_cnt_en		),
+		.wdt_en(	wdt_en			),
+		.wdt_clr(	wdt_clr & valid_1	),
+		.wdt_to(	wdt_to			)
+		);
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -772,12 +779,10 @@ always @(posedge clk)
 // registers in the IO cells, this is not needed. Synopsys FPGA compiler appears to
 // make the correct decission either way, and gett rid of unneded logic ...
 
-//synopsys sync_set_reset "rst"
 always @(posedge clk)
 	if(rst)		inst_addr <= #1 PC_RST_VECTOR;
 	else		inst_addr <= #1 pc_next;
 
-//synopsys sync_set_reset "rst"
 always @(posedge clk)
 	if(rst)		pc <= #1 PC_RST_VECTOR;
 	else		pc <= #1 pc_next;

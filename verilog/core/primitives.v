@@ -39,16 +39,19 @@
 
 //  CVS Log
 //
-//  $Id: primitives.v,v 1.2 2002-09-27 15:35:40 rudi Exp $
+//  $Id: primitives.v,v 1.3 2002-10-01 12:44:24 rudi Exp $
 //
-//  $Date: 2002-09-27 15:35:40 $
-//  $Revision: 1.2 $
+//  $Date: 2002-10-01 12:44:24 $
+//  $Revision: 1.3 $
 //  $Author: rudi $
 //  $Locker:  $
 //  $State: Exp $
 //
 // Change History:
 //               $Log: not supported by cvs2svn $
+//               Revision 1.2  2002/09/27 15:35:40  rudi
+//               Minor update to newer devices ...
+//
 //
 //
 //
@@ -71,7 +74,7 @@ output	[7:0]	out;
 reg	[7:0]	out;
 
 always @(sel or in0 or in1 or in2 or in3)
-	case(sel)
+	case(sel)	// synopsys full_case parallel_case
 	  0: out = in0;
 	  1: out = in1;
 	  2: out = in2;
@@ -128,7 +131,7 @@ output	[7:0]	out;
 reg	[7:0]	out;
 
 always @(sel or in0 or in1 or in2 or in3 or in4 or in5 or in6 or in7)
-	case(sel)
+	case(sel)	// synopsys full_case parallel_case
 	   3'd0:	out = in0;
 	   3'd1:	out = in1;
 	   3'd2:	out = in2;
@@ -168,7 +171,7 @@ module inc11(in, out);
 input	[10:0]	in;
 output	[10:0]	out;
 
-assign out = in + 1;
+assign out = in + 11'h1;
 
 endmodule
 
@@ -177,7 +180,7 @@ module inc8(in, out);
 input	[7:0]	in;
 output	[7:0]	out;
 
-assign out = in + 1;
+assign out = in + 8'h1;
 
 endmodule
 
@@ -209,31 +212,6 @@ always @(posedge clk)
 		stack3 <= #1 stack4;
 	   end
    end
-
-endmodule
-
-
-// Synchrounous SRAM
-// 128 bytes by 8 bits
-// 1 read port, 1 write port
-module ssram_128x8(clk, rd_addr, rd_data, we, wr_addr, wr_data);
-input		clk;
-input	[6:0]	rd_addr;
-output	[7:0]	rd_data;
-input		we;
-input	[6:0]	wr_addr;
-input	[7:0]	wr_data;
-
-reg	[7:0]	rf_mem[0:128];	// Actual Memory
-
-reg	[7:0]	rd_data;
-
-always @(posedge clk)		// Synchrounous Read Logic
-	rd_data <= #1 rf_mem[rd_addr];
-
-always @(posedge clk)		// Synchrounous Write Logic
-	if(we)
-		rf_mem[wr_addr] <= #1 wr_data;
 
 endmodule
 

@@ -39,16 +39,19 @@
 
 //  CVS Log
 //
-//  $Id: alu.v,v 1.2 2002-09-27 15:35:40 rudi Exp $
+//  $Id: alu.v,v 1.3 2002-10-01 12:44:24 rudi Exp $
 //
-//  $Date: 2002-09-27 15:35:40 $
-//  $Revision: 1.2 $
+//  $Date: 2002-10-01 12:44:24 $
+//  $Revision: 1.3 $
 //  $Author: rudi $
 //  $Locker:  $
 //  $State: Exp $
 //
 // Change History:
 //               $Log: not supported by cvs2svn $
+//               Revision 1.2  2002/09/27 15:35:40  rudi
+//               Minor update to newer devices ...
+//
 //
 //
 //
@@ -108,7 +111,7 @@ always @(op or s1 or s2 or mask or c_in)
    begin
    	cout = 0;
 	  case(op)	// synopsys full_case parallel_case
-	   ALU_ADD:	{cout, out} = s1 + s2;
+	   ALU_ADD:	{cout, out_t} = s1 + s2;
 	   ALU_AND:	out_t = s1 & s2;
 	   ALU_CLR:	out_t = 8'h00;
 	   ALU_NOT:	out_t = ~s1;

@@ -39,16 +39,19 @@
 
 //  CVS Log
 //
-//  $Id: register_file.v,v 1.2 2002-09-27 15:35:40 rudi Exp $
+//  $Id: register_file.v,v 1.3 2002-10-01 12:44:24 rudi Exp $
 //
-//  $Date: 2002-09-27 15:35:40 $
-//  $Revision: 1.2 $
+//  $Date: 2002-10-01 12:44:24 $
+//  $Revision: 1.3 $
 //  $Author: rudi $
 //  $Locker:  $
 //  $State: Exp $
 //
 // Change History:
 //               $Log: not supported by cvs2svn $
+//               Revision 1.2  2002/09/27 15:35:40  rudi
+//               Minor update to newer devices ...
+//
 //
 //
 //
@@ -82,25 +85,20 @@ wire [6:0]	wr_addr;
 wire [7:0]	rf_rd_data_mem;
 reg  [7:0]	wr_data_tmp;
 reg		rd_wr_addr_equal;
-wire		rd_wr_addr_equal_tmp;
-//reg  [6:0]	rd_adr_r, wr_adr_r;
 
 // Simple Read & Write Address Mapping to memory address
+assign	rd_addr[6]   = ~rf_rd_addr[4];
+assign	rd_addr[5:3] = rf_rd_addr[4] ? {rf_rd_bnk, rf_rd_addr[3]} : 3'h0;
+assign	rd_addr[2:0] = rf_rd_addr[2:0];
 
-assign	rd_addr = 	rf_rd_addr[4] ?
-			{1'b0, rf_rd_bnk, rf_rd_addr[3:0]} :
-			{1'b1, 2'b00, 1'b0, rf_rd_addr[2:0]};
-
-assign	wr_addr = 	rf_wr_addr[4] ?
-			{1'b0, rf_wr_bnk, rf_wr_addr[3:0]} :
-			{1'b1, 2'b00, 1'b0, rf_wr_addr[2:0]};
+assign	wr_addr[6]   = ~rf_wr_addr[4];
+assign	wr_addr[5:3] = rf_wr_addr[4] ? {rf_wr_bnk, rf_wr_addr[3]} : 3'h0;
+assign	wr_addr[2:0] = rf_wr_addr[2:0];
 
 // This logic is to bypass the register file if we are reading and
 // writing (in previous instruction) to the same register
 always @(posedge clk)
-	rd_wr_addr_equal <= #1 rd_wr_addr_equal_tmp;
-
-assign rd_wr_addr_equal_tmp = (rd_addr==wr_addr) & rf_we;
+	rd_wr_addr_equal <= #1 (rd_addr==wr_addr) & rf_we;
 
 assign rf_rd_data = rd_wr_addr_equal ? wr_data_tmp : rf_rd_data_mem;
 
