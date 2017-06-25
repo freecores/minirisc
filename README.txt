@@ -34,7 +34,7 @@ and downloaded the core. Pretty soon I found out that it had many
 many errors and omissions from the original 16C57. So I started looking
 at the code. This is when I realized it was very badly designed and
 could not be made run faster. So, I sat down and wrote my own PIC IP
-core last night. A lot of work was spend in writing test code to ensure
+core last night. A lot of work was spent in writing test code to ensure
 that it was 100% compatible from the software point of view.
 
 - A PIC compatible Microcontroller that runs a lot faster
@@ -69,7 +69,7 @@ Performance
   - Xilinx Spartan2 (Device: xc2s30-6-cs144): Fmax: 50Mhz, Utilization: 66%, Ports: Tsu: 2.2nS, Tcq: 7.7nS
   - Xilinx Virtex   (Device: xcv50-4-cs144) : Fmax: 40Mhz, Utilization: 35%, Ports: Tsu: 3.0nS, Tcq: 6.2nS
   - Xilinx VirtexE  (Device: xcv50e-8-cs144): Fmax: 66Mhz, Utilization: 35%, Ports: Tsu: 1.7nS, Tcq: 4.5nS
-  Half of the cycle time is spend in routing delays. My guess is that by placing
+  Half of the cycle time is spent in routing delays. My guess is that by placing
   proper locatiuon contrains and guiding the back-end tools, a significant
   speed improvement can be achieved ....
 - I estimat about 25K gates with the xilinx primitives, (excluding Register
